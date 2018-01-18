@@ -19,7 +19,7 @@ package ml.dmlc.xgboost4j.scala.spark
 import scala.collection.mutable
 
 import ml.dmlc.xgboost4j.scala.Booster
-import org.apache.spark.ml.linalg.{Vector => MLVector}
+import org.apache.spark.mllib.linalg.{Vector => MLVector}
 import org.apache.spark.ml.param.ParamMap
 import org.apache.spark.ml.util.Identifiable
 import org.apache.spark.sql._
@@ -37,13 +37,13 @@ class XGBoostRegressionModel private[spark](override val uid: String, booster: B
   // only called in copy()
   def this(uid: String) = this(uid, null)
 
-  override protected def transformImpl(testSet: Dataset[_]): DataFrame = {
+  override protected def transformImpl(testSet: DataFrame): DataFrame = {
     transformSchema(testSet.schema, logging = true)
     val predictRDD = produceRowRDD(testSet)
     val tempPredColName = $(predictionCol) + "_temp"
     val transformerForArrayTypedPredCol =
       udf((regressionResults: mutable.WrappedArray[Float]) => regressionResults(0))
-    testSet.sparkSession.createDataFrame(predictRDD,
+    testSet.sqlContext.createDataFrame(predictRDD,
       schema = testSet.schema.add(tempPredColName, ArrayType(FloatType, containsNull = false))
     ).withColumn(
       $(predictionCol),

@@ -16,19 +16,19 @@
 
 package ml.dmlc.xgboost4j.scala.spark
 
-import scala.collection.mutable
-
 import ml.dmlc.xgboost4j.scala.spark.params._
 import ml.dmlc.xgboost4j.{LabeledPoint => XGBLabeledPoint}
-
 import org.apache.spark.ml.Predictor
-import org.apache.spark.ml.linalg.{DenseVector, SparseVector, Vector}
 import org.apache.spark.ml.param._
 import org.apache.spark.ml.util._
+import org.apache.spark.mllib.linalg.{DenseVector, SparseVector, Vector}
+import org.apache.spark.mllib.regression.{LabeledPoint => MLLabeledPoint}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.FloatType
-import org.apache.spark.sql.{Dataset, Row}
+import org.apache.spark.sql.{DataFrame, Row}
 import org.json4s.DefaultFormats
+
+import scala.collection.mutable
 
 /**
  * XGBoost Estimator to produce a XGBoost model
@@ -107,7 +107,7 @@ class XGBoostEstimator private[spark](
     }
   }
 
-  private def ensureColumns(trainingSet: Dataset[_]): Dataset[_] = {
+  private def ensureColumns(trainingSet: DataFrame): DataFrame = {
     var newTrainingSet = trainingSet
     if (!trainingSet.columns.contains($(baseMarginCol))) {
       newTrainingSet = newTrainingSet.withColumn($(baseMarginCol), lit(Float.NaN))
@@ -121,7 +121,7 @@ class XGBoostEstimator private[spark](
   /**
    * produce a XGBoostModel by fitting the given dataset
    */
-  override def train(trainingSet: Dataset[_]): XGBoostModel = {
+  override def train(trainingSet: DataFrame): XGBoostModel = {
     val instances = ensureColumns(trainingSet).select(
       col($(featuresCol)),
       col($(labelCol)).cast(FloatType),
@@ -167,7 +167,7 @@ object XGBoostEstimator extends MLReadable[XGBoostEstimator] {
         "we do not support persist XGBoostEstimator with customized evaluator and objective" +
           " function for now")
       implicit val format = DefaultFormats
-      implicit val sc = super.sparkSession.sparkContext
+      implicit val sc = super.sc
       DefaultXGBoostParamsWriter.saveMetadata(instance, path, sc)
     }
   }

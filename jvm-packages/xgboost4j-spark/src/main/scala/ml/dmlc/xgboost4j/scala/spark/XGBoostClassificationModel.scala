@@ -16,14 +16,15 @@
 
 package ml.dmlc.xgboost4j.scala.spark
 
-import scala.collection.mutable
 import ml.dmlc.xgboost4j.scala.Booster
-import org.apache.spark.ml.linalg.{DenseVector => MLDenseVector, Vector => MLVector}
 import org.apache.spark.ml.param.{BooleanParam, DoubleArrayParam, Param, ParamMap}
 import org.apache.spark.ml.util.Identifiable
+import org.apache.spark.mllib.linalg.{DenseVector => MLDenseVector, Vector => MLVector}
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{DataFrame, Dataset}
+
+import scala.collection.mutable
 
 /**
  * class of the XGBoost model used for classification task
@@ -74,13 +75,13 @@ class XGBoostClassificationModel private[spark](
 
   // generate dataframe containing raw prediction column which is typed as Vector
   private def predictRaw(
-      testSet: Dataset[_],
+      testSet: DataFrame,
       temporalColName: Option[String] = None,
       forceTransformedScore: Option[Boolean] = None): DataFrame = {
     val predictRDD = produceRowRDD(testSet, forceTransformedScore.getOrElse($(outputMargin)))
     val colName = temporalColName.getOrElse($(rawPredictionCol))
     val tempColName = colName + "_arraytype"
-    val dsWithArrayTypedRawPredCol = testSet.sparkSession.createDataFrame(predictRDD, schema = {
+    val dsWithArrayTypedRawPredCol = testSet.sqlContext.createDataFrame(predictRDD, schema = {
       testSet.schema.add(tempColName, ArrayType(FloatType, containsNull = false))
     })
     val transformerForProbabilitiesArray =
@@ -96,7 +97,7 @@ class XGBoostClassificationModel private[spark](
       drop(tempColName)
   }
 
-  private def fromFeatureToPrediction(testSet: Dataset[_]): Dataset[_] = {
+  private def fromFeatureToPrediction(testSet: DataFrame): DataFrame = {
     val rawPredictionDF = predictRaw(testSet, Some("rawPredictionCol"))
     val predictionUDF = udf(raw2prediction _).apply(col("rawPredictionCol"))
     val tempDF = rawPredictionDF.withColumn($(predictionCol), predictionUDF)
@@ -129,7 +130,7 @@ class XGBoostClassificationModel private[spark](
     }
   }
 
-  override protected def transformImpl(testSet: Dataset[_]): DataFrame = {
+  override protected def transformImpl(testSet: DataFrame): DataFrame = {
     transformSchema(testSet.schema, logging = true)
     if (isDefined(thresholds)) {
       require($(thresholds).length == numClasses, this.getClass.getSimpleName +

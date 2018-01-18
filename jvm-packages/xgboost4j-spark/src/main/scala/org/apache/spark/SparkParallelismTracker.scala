@@ -20,6 +20,7 @@ import java.net.URL
 
 import org.apache.commons.logging.LogFactory
 import org.apache.spark.scheduler.{SparkListener, SparkListenerTaskEnd}
+import org.apache.spark.ui.SparkUI
 import org.codehaus.jackson.map.ObjectMapper
 
 import scala.collection.JavaConverters._
@@ -42,10 +43,9 @@ class SparkParallelismTracker(
 
   private[this] val mapper = new ObjectMapper()
   private[this] val logger = LogFactory.getLog("XGBoostSpark")
-  private[this] val url = sc.uiWebUrl match {
-    case Some(baseUrl) => new URL(s"$baseUrl/api/v1/applications/${sc.applicationId}/executors")
-    case _ => null
-  }
+  private[this] val url = Seq(
+    sc.conf.get("spark.driver.host", ""),
+    sc.conf.get("spark.ui.port", "4040")).mkString(":")
 
   private[this] def numAliveCores: Int = {
     try {
