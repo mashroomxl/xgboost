@@ -27,6 +27,7 @@ import org.apache.hadoop.fs.{FSDataInputStream, Path}
 import org.apache.spark.mllib.regression.{LabeledPoint => MLLabeledPoint}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{SparkContext, SparkParallelismTracker, TaskContext}
 
 import scala.collection.mutable
@@ -109,10 +110,15 @@ object XGBoost extends Serializable {
       prevBooster: Booster
     ): RDD[(Booster, Map[String, Array[Float]])] = {
 
+    data.persist(StorageLevel.MEMORY_AND_DISK)
+
     val partitionedBaseMargin = data.map(_.baseMargin)
     // to workaround the empty partitions in training dataset,
     // this might not be the best efficient implementation, see
     // (https://github.com/dmlc/xgboost/issues/1277)
+    System.out.println(s"Rows of data in buildDistributedBoosters: ${data.count()}")
+    System.out.println(s"Rows of partitionedBaseMargin in buildDistributedBoosters: ${partitionedBaseMargin.count()}")
+
     data.zipPartitions(partitionedBaseMargin) { (labeledPoints, baseMargins) =>
       if (labeledPoints.isEmpty) {
         throw new XGBoostError(
@@ -290,6 +296,9 @@ object XGBoost extends Serializable {
     val xgbTrainingData = trainingData.map { case MLLabeledPoint(label, features) =>
       features.asXGB.copy(label = label.toFloat)
     }
+
+    System.out.println(s"Rows of xgbTrainingData: ${xgbTrainingData.count()}")
+
     trainDistributed(xgbTrainingData, params, round, nWorkers, obj, eval,
       useExternalMemory, missing)
   }
@@ -328,6 +337,8 @@ object XGBoost extends Serializable {
     }
     val (checkpointPath, savingFeq) = CheckpointManager.extractParams(params)
     val partitionedData = repartitionForTraining(trainingData, nWorkers)
+
+    System.out.println(s"Rows of partitionedData: ${partitionedData.count()}")
 
     val sc = trainingData.sparkContext
     val checkpointManager = new CheckpointManager(sc, checkpointPath)
