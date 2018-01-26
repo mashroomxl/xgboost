@@ -117,7 +117,7 @@ object XGBoost extends Serializable {
     // this might not be the best efficient implementation, see
     // (https://github.com/dmlc/xgboost/issues/1277)
     System.out.println(s"Rows of data in buildDistributedBoosters: ${data.count()}")
-    System.out.println(s"Rows of partitionedBaseMargin in buildDistributedBoosters: ${partitionedBaseMargin.count()}")
+    System.out.println(s"Rows: ${partitionedBaseMargin.count()}")
 
     data.zipPartitions(partitionedBaseMargin) { (labeledPoints, baseMargins) =>
       if (labeledPoints.isEmpty) {
