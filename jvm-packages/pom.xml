@@ -81,6 +81,7 @@
                     <testSourceDirectory>${basedir}/src/test/scala</testSourceDirectory>
                     <configLocation>scalastyle-config.xml</configLocation>
                     <outputEncoding>UTF-8</outputEncoding>
+                    <inputEncoding>UTF-8</inputEncoding>
                 </configuration>
                 <executions>
                     <execution>
