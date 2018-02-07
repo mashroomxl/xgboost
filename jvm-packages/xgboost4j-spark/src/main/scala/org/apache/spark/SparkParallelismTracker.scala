@@ -16,14 +16,10 @@
 
 package org.apache.spark
 
-import java.net.URL
-
 import org.apache.commons.logging.LogFactory
 import org.apache.spark.scheduler.{SparkListener, SparkListenerTaskEnd}
-import org.apache.spark.ui.SparkUI
 import org.codehaus.jackson.map.ObjectMapper
 
-import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future, TimeoutException}
@@ -43,24 +39,26 @@ class SparkParallelismTracker(
 
   private[this] val mapper = new ObjectMapper()
   private[this] val logger = LogFactory.getLog("XGBoostSpark")
-  private[this] val url = Seq(
-    sc.conf.get("spark.driver.host", ""),
+  private[this] val hostPort = Seq(
+    Option(sc.conf.getenv("SPARK_PUBLIC_DNS")).getOrElse(sc.conf.get("spark.driver.host")),
     sc.conf.get("spark.ui.port", "4040")).mkString(":")
+  private[this] val url = s"http:${hostPort}/api/v1/applications/${sc.applicationId}/executors"
 
   private[this] def numAliveCores: Int = {
-    try {
-      if (url != null) {
-        mapper.readTree(url).findValues("totalCores").asScala.map(_.asInt).sum
-      } else {
-        Int.MaxValue
-      }
-    } catch {
-      case ex: Throwable =>
-        logger.warn(s"Unable to read total number of alive cores from REST API." +
-          s"Health Check will be ignored.")
-        ex.printStackTrace()
-        Int.MaxValue
-    }
+    Int.MaxValue
+//    try {
+//      if (url != null) {
+//        mapper.readTree(url).findValues("totalCores").asScala.map(_.asInt).sum
+//      } else {
+//        Int.MaxValue
+//      }
+//    } catch {
+//      case ex: Throwable =>
+//        logger.warn(s"Unable to read total number of alive cores from REST API." +
+//          s"Health Check will be ignored.")
+//        ex.printStackTrace()
+//        Int.MaxValue
+//    }
   }
 
   private[this] def waitForCondition(
