@@ -250,7 +250,7 @@ abstract class XGBoostModel(protected var _booster: Booster)
       predLeaf: Boolean = false): RDD[Row] = {
     val broadcastBooster = testSet.sqlContext.sparkContext.broadcast(_booster)
     val appName = testSet.sqlContext.sparkContext.appName
-    testSet.rdd.mapPartitions {
+    val result = testSet.rdd.mapPartitions {
       rowIterator =>
         if (rowIterator.hasNext) {
           val rabitEnv = Array("DMLC_TASK_ID" -> TaskContext.getPartitionId().toString).toMap
@@ -288,6 +288,10 @@ abstract class XGBoostModel(protected var _booster: Booster)
           Iterator[Row]()
         }
     }
+
+    System.out.println(s"RDD in XGBoostModel-Line292: ${result.map(row => row.toSeq.mkString(", ")).take(20).mkString(System.lineSeparator())}")
+
+    result
   }
 
   /**

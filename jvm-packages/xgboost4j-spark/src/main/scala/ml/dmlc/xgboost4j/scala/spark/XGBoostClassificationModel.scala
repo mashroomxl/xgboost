@@ -91,10 +91,14 @@ class XGBoostClassificationModel private[spark](
         } else {
           rawPredArray.map(_.toDouble).array
         }
-    dsWithArrayTypedRawPredCol.withColumn(colName,
+    val result = dsWithArrayTypedRawPredCol.withColumn(colName,
       udf((rawPredArray: mutable.WrappedArray[Float]) =>
         new MLDenseVector(transformerForProbabilitiesArray(rawPredArray))).apply(col(tempColName))).
       drop(tempColName)
+
+    System.out.println(s"RDD in XGBoostClassificationModel-Line99: ${result.map(row => row.toSeq.mkString(", ")).take(20).mkString(System.lineSeparator())}")
+
+    result
   }
 
   private def fromFeatureToPrediction(testSet: DataFrame): DataFrame = {
@@ -154,8 +158,10 @@ class XGBoostClassificationModel private[spark](
           " true")
         val rawToPredUDF = udf(raw2prediction _).apply(col($(rawPredictionCol)))
         outputData = outputData.withColumn($(predictionCol), rawToPredUDF)
+        System.out.println(s"RDD in XGBoostClassificationModel-Line161: ${outputData.map(row => row.toSeq.mkString(", ")).take(20).mkString(System.lineSeparator())}")
       } else {
         outputData = fromFeatureToPrediction(testSet)
+        System.out.println(s"RDD in XGBoostClassificationModel-Line164: ${outputData.map(row => row.toSeq.mkString(", ")).take(20).mkString(System.lineSeparator())}")
       }
       numColsOutput += 1
     }
