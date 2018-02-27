@@ -42,25 +42,25 @@ class SparkParallelismTracker(
   private[this] val hostPort = Seq(
     Option(sc.conf.getenv("SPARK_PUBLIC_DNS")).getOrElse(sc.conf.get("spark.driver.host")),
     sc.conf.get("spark.ui.port", "4040")).mkString(":")
-  private[this] val url = s"http:${hostPort}/api/v1/applications/${sc.applicationId}/executors"
+  private[this] val url = s"http://${hostPort}/api/v1/applications/${sc.applicationId}/executors"
 
   private[this] def numAliveCores: Int = {
     System.out.println(s"url in SparkParallelismTracker-Line48: ${url}")
-
+    // TODO 实现逻辑
     Int.MaxValue
-//    try {
-//      if (url != null) {
-//        mapper.readTree(url).findValues("totalCores").asScala.map(_.asInt).sum
-//      } else {
-//        Int.MaxValue
-//      }
-//    } catch {
-//      case ex: Throwable =>
-//        logger.warn(s"Unable to read total number of alive cores from REST API." +
-//          s"Health Check will be ignored.")
-//        ex.printStackTrace()
-//        Int.MaxValue
-//    }
+    //    try {
+    //      if (url != null) {
+    //        mapper.readTree(url).findValues("totalCores").asScala.map(_.asInt).sum
+    //      } else {
+    //        Int.MaxValue
+    //      }
+    //    } catch {
+    //      case ex: Throwable =>
+    //        logger.warn(s"Unable to read total number of alive cores from REST API." +
+    //          s"Health Check will be ignored.")
+    //        ex.printStackTrace()
+    //        Int.MaxValue
+    //    }
   }
 
   private[this] def waitForCondition(

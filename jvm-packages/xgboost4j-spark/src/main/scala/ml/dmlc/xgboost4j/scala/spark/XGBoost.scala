@@ -116,8 +116,8 @@ object XGBoost extends Serializable {
     // to workaround the empty partitions in training dataset,
     // this might not be the best efficient implementation, see
     // (https://github.com/dmlc/xgboost/issues/1277)
-    System.out.println(s"Rows of data in buildDistributedBoosters: ${data.count()}")
-    System.out.println(s"Rows: ${partitionedBaseMargin.count()}")
+    // System.out.println(s"Rows of data in buildDistributedBoosters: ${data.count()}")
+    // System.out.println(s"Rows: ${partitionedBaseMargin.count()}")
 
     data.zipPartitions(partitionedBaseMargin) { (labeledPoints, baseMargins) =>
       if (labeledPoints.isEmpty) {
@@ -297,7 +297,7 @@ object XGBoost extends Serializable {
       features.asXGB.copy(label = label.toFloat)
     }
 
-    System.out.println(s"Rows of xgbTrainingData: ${xgbTrainingData.count()}")
+    // System.out.println(s"Rows of xgbTrainingData: ${xgbTrainingData.count()}")
 
     trainDistributed(xgbTrainingData, params, round, nWorkers, obj, eval,
       useExternalMemory, missing)
@@ -338,7 +338,7 @@ object XGBoost extends Serializable {
     val (checkpointPath, savingFeq) = CheckpointManager.extractParams(params)
     val partitionedData = repartitionForTraining(trainingData, nWorkers)
 
-    System.out.println(s"Rows of partitionedData: ${partitionedData.count()}")
+    // System.out.println(s"Rows of partitionedData: ${partitionedData.count()}")
 
     val sc = trainingData.sparkContext
     val checkpointManager = new CheckpointManager(sc, checkpointPath)

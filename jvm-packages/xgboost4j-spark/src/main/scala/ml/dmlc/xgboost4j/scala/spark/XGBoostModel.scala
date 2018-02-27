@@ -289,12 +289,12 @@ abstract class XGBoostModel(protected var _booster: Booster)
         }
     }
 
-    System.out.println(s"RDD in XGBoostModel-Line292: " +
-      s"${result
-        .map(row => row.toSeq.mkString(", "))
-        .take(20)
-        .mkString(System.lineSeparator())}"
-    )
+//    System.out.println(s"RDD in XGBoostModel-Line292: " +
+//      s"${result
+//        .map(row => row.toSeq.mkString(", "))
+//        .take(20)
+//        .mkString(System.lineSeparator())}"
+//    )
 
     result
   }
