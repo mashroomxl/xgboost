@@ -45,8 +45,7 @@ class SparkParallelismTracker(
   private[this] val url = s"http://${hostPort}/api/v1/applications/${sc.applicationId}/executors"
 
   private[this] def numAliveCores: Int = {
-    System.out.println(s"url in SparkParallelismTracker-Line48: ${url}")
-    // TODO 实现逻辑
+    // TODO implement the business logic.
     Int.MaxValue
     //    try {
     //      if (url != null) {
