@@ -205,8 +205,10 @@ object XGBoost extends Serializable {
     val objective = params.getOrElse("objective", params.getOrElse("obj_type", null))
     objective != null && {
       val objStr = objective.toString
-      objStr != "regression" && !objStr.startsWith("reg:") && objStr != "count:poisson" &&
-        !objStr.startsWith("rank:")
+      "reg:logistic".contentEquals(objStr) || (
+        objStr != "regression" && !objStr.startsWith("reg:")
+          && objStr != "count:poisson" && !objStr.startsWith("rank:")
+        )
     }
   }
 
